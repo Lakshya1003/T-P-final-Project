@@ -27,10 +27,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusCircle = document.querySelector('.circle');
     const chatBox = document.getElementById('chat-box');
     const micBtn = document.getElementById('mic-btn');
+    const textInput = document.getElementById('text-input');
+    const sendBtn = document.getElementById('send-btn');
 
     micBtn.addEventListener('click', () => {
         socket.emit('start_listen');
         addMessage('System', 'Manual trigger sent...');
+    });
+
+    function sendTextCommand() {
+        const text = textInput.value.trim();
+        if (text) {
+            socket.emit('text_command', { text: text });
+            textInput.value = '';
+        }
+    }
+
+    sendBtn.addEventListener('click', sendTextCommand);
+
+    textInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendTextCommand();
+        }
     });
 
     socket.on('connect', () => {

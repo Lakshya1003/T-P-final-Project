@@ -7,3 +7,5 @@ flask-socketio
 pyaudio
 pywhatkit
 python-dotenv
+gTTS
+playsound==1.2.2

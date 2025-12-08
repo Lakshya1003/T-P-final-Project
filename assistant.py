@@ -130,22 +130,36 @@ class BlueberryAssistant:
                 return
 
         # 2. Built-in Commands
-        if "open calculator" in command:
+        if "calculator" in command or "calc" in command:
             self.speak("Opening Calculator")
             subprocess.Popen("calc.exe")
+            return
         
-        elif "open vs code" in command or "open code" in command:
+        elif "vs code" in command or "code" in command:
             self.speak("Opening Visual Studio Code")
             # Assuming VS Code is in path or default location
             try:
                 subprocess.Popen("code")
             except:
                 self.speak("I couldn't find VS Code.")
+            return
 
-        elif "play" in command and "on youtube" in command:
-            song = command.replace("play", "").replace("on youtube", "").strip()
-            self.speak(f"Playing {song} on YouTube")
-            pywhatkit.playonyt(song)
+        elif "youtube" in command:
+            if "play" in command:
+                song = command.replace("play", "").replace("on youtube", "").strip()
+                self.speak(f"Playing {song} on YouTube")
+                pywhatkit.playonyt(song)
+            else:
+                self.speak("Opening YouTube")
+                import webbrowser
+                webbrowser.open("https://youtube.com")
+            return
+
+        elif "google" in command:
+            self.speak("Opening Google")
+            import webbrowser
+            webbrowser.open("https://google.com")
+            return
 
         elif "add command" in command:
             self.speak("What should be the command phrase?")
@@ -156,10 +170,12 @@ class BlueberryAssistant:
                 if response:
                     database.add_command(phrase, "speak", response)
                     self.speak("Command added successfully.")
+            return
 
         # 3. Chatbot (Gemini)
         else:
             try:
+                # Use the model name exactly as listed in the available models
                 response = model.generate_content(command)
                 reply = response.text
                 # Keep it brief for TTS
@@ -189,19 +205,23 @@ import threading
 import time
 from dotenv import load_dotenv
 import database
+from gtts import gTTS
+from playsound import playsound
+import re
 
 load_dotenv()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-pro')
+# Using gemini-2.5-flash as seen in available models
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 class BlueberryAssistant:
     def __init__(self, ui_callback=None):
         self.ui_callback = ui_callback
         self.running = True
         
-        # TTS Engine
+        # TTS Engine (Fallback/Init)
         self.engine = pyttsx3.init()
         self.engine.setProperty('rate', 170)
         
@@ -248,15 +268,31 @@ class BlueberryAssistant:
             self.audio_stream.close()
 
     def speak(self, text):
-        """Speak text using pyttsx3."""
+        """Speak text using gTTS and playsound."""
         if self.ui_callback:
             self.ui_callback("Blueberry", text)
         print(f"Blueberry: {text}")
+        
+        # Clean text for speech (remove markdown)
+        clean_text = text.replace("*", "")
+        
         try:
-            self.engine.say(text)
-            self.engine.runAndWait()
+            # Using gTTS
+            tts = gTTS(text=clean_text, lang='en')
+            filename = "temp_voice.mp3"
+            if os.path.exists(filename):
+                os.remove(filename)
+            tts.save(filename)
+            playsound(filename)
+            if os.path.exists(filename):
+                os.remove(filename)
         except Exception as e:
-            print(f"TTS Error: {e}")
+            print(f"gTTS Error: {e}. Fallback to pyttsx3.")
+            try:
+                self.engine.say(clean_text)
+                self.engine.runAndWait()
+            except Exception as e2:
+                print(f"TTS Fallback Error: {e2}")
 
     def listen(self):
         """Listen for command after hotword."""
@@ -395,6 +431,13 @@ class BlueberryAssistant:
     def trigger(self):
         """Manually trigger the assistant."""
         self.manual_trigger = True
+
+    def process_text_input(self, text):
+        """Handle text input from UI directly."""
+        print(f"Processing text input: {text}")
+        if self.ui_callback:
+            self.ui_callback("User", text)
+        self.process_command(text.lower())
 
     def stop(self):
         self.running = False

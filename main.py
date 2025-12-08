@@ -36,6 +36,25 @@ def ui_callback(sender, message):
 def start_assistant():
     global assistant
     assistant = BlueberryAssistant(ui_callback=ui_callback)
+from flask import Flask, render_template
+from flask_socketio import SocketIO
+import threading
+from assistant import BlueberryAssistant
+
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+assistant_thread = None
+assistant = None
+
+def ui_callback(sender, message):
+    """Callback to send messages to the frontend."""
+    print(f"Sending to UI: {sender}: {message}")
+    socketio.emit('message', {'sender': sender, 'text': message})
+
+def start_assistant():
+    global assistant
+    assistant = BlueberryAssistant(ui_callback=ui_callback)
     assistant.run()
 
 @app.route('/')
@@ -48,6 +67,13 @@ def handle_start_listen():
     print("Received manual trigger from UI")
     if assistant:
         assistant.trigger()
+
+@socketio.on('text_command')
+def handle_text_command(data):
+    """Handle text input from UI."""
+    print(f"Received text command: {data}")
+    if assistant:
+        assistant.process_text_input(data['text'])
 
 if __name__ == '__main__':
     # Start assistant in a separate thread
