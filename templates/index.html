@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blueberry Voice Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+</head>
+
+<body>
+    <div id="particles-js"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Blueberry</h1>
+            <p>Your Virtual Voice Assistant</p>
+        </div>
+
+        <div class="chat-box" id="chat-box">
+            <!-- Messages will appear here -->
+            <div class="message system">
+                <p>Initializing...</p>
+            </div>
+        </div>
+
+        <div class="status-indicator" id="status-indicator">
+            <div class="circle"></div>
+            <span id="status-text">Disconnected</span>
+            <button id="mic-btn" class="mic-btn">🎙️</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>

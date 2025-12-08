@@ -1,0 +1,9 @@
+pvporcupine==1.9.5
+SpeechRecognition
+pyttsx3
+google-generativeai
+flask
+flask-socketio
+pyaudio
+pywhatkit
+python-dotenv
